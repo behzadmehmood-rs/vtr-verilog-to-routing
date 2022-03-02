@@ -1,5 +1,6 @@
 #include "read_circuit.h"
 #include "read_blif.h"
+#include "read_verilog.h"
 #include "read_interchange_netlist.h"
 #include "atom_netlist.h"
 #include "atom_netlist_utils.h"
@@ -43,6 +44,8 @@ AtomNetlist read_and_process_circuit(e_circuit_format circuit_format, t_vpr_setu
             circuit_format = e_circuit_format::BLIF;
         } else if (name_ext[1] == ".eblif") {
             circuit_format = e_circuit_format::EBLIF;
+        } else if (name_ext[1] == ".v") {
+            circuit_format = e_circuit_format::VERILOG;
         } else if (name_ext[1] == ".edn") {
             circuit_format = e_circuit_format::BLIF;        // TODO
         } else if (name_ext[1] == ".edif") {
@@ -64,6 +67,9 @@ AtomNetlist read_and_process_circuit(e_circuit_format circuit_format, t_vpr_setu
                 break;
             case e_circuit_format::FPGA_INTERCHANGE:
                 netlist = read_interchange_netlist(circuit_file, arch);
+                break;
+            case e_circuit_format::VERILOG:
+                read_verilog();
                 break;
             default:
                 VPR_FATAL_ERROR(VPR_ERROR_ATOM_NETLIST,

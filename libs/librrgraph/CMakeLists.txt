@@ -8,7 +8,7 @@ file(GLOB_RECURSE LIB_HEADERS src/*/*.h)
 files_to_dirs(LIB_HEADERS LIB_INCLUDE_DIRS)
 
 #Remove test executable from library
-list(REMOVE_ITEM LIB_SOURCES ${EXEC_SOURCES})
+#list(REMOVE_ITEM LIB_SOURCES ${EXEC_SOURCES})
 
 #Create the library
 add_library(librrgraph STATIC

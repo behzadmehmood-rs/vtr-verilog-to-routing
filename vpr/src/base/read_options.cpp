@@ -101,6 +101,8 @@ struct ParseCircuitFormat {
             conv_value.set_value(e_circuit_format::BLIF);
         else if (str == "eblif")
             conv_value.set_value(e_circuit_format::EBLIF);
+        else if (str == "v")
+            conv_value.set_value(e_circuit_format::VERILOG);
         else if (str == "edn")
             conv_value.set_value(e_circuit_format::BLIF);       // TODO
         else if (str == "edif")
@@ -124,6 +126,10 @@ struct ParseCircuitFormat {
             conv_value.set_value("blif");
         else if (val == e_circuit_format::EBLIF)
             conv_value.set_value("eblif");
+        else if (val == e_circuit_format::VERILOG)
+            conv_value.set_value("v");
+        //else if (val == e_circuit_format::VERILOG)
+           // conv_value.set_value("verilog");
         /*  TODO
         else if (val == e_circuit_format::EDN)
             conv_value.set_value("edn");
@@ -139,7 +145,7 @@ struct ParseCircuitFormat {
     }
 
     std::vector<std::string> default_choices() {
-        return {"auto", "blif", "eblif", "edn", "edif", "fpga-interchange"};
+        return {"auto", "blif", "eblif", "v", "edn", "edif", "fpga-interchange"};
     }
 };
 struct ParseRoutePredictor {
