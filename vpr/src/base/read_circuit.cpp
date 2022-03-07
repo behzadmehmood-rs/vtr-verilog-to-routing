@@ -6,6 +6,7 @@
 #include "atom_netlist_utils.h"
 #include "echo_files.h"
 
+
 #include "vtr_assert.h"
 #include "vtr_log.h"
 #include "vtr_util.h"
@@ -51,7 +52,7 @@ AtomNetlist read_and_process_circuit(e_circuit_format circuit_format, t_vpr_setu
            } else if (name_ext[1] == ".edif") {
                circuit_format = e_circuit_format::EDIF;        // TODO
            } else {
-               VPR_FATAL_ERROR(VPR_ERROR_ATOM_NETLIST, "Failed to determine file format for '%s' expected .blif or .eblif extension",
+               VPR_FATAL_ERROR(VPR_ERROR_ATOM_NETLIST, "Failed to determine file format for '%s' expected .blif ,.eblif, .eif, .edn or .v extension",
                                circuit_file);
            }
        }
@@ -66,7 +67,8 @@ AtomNetlist read_and_process_circuit(e_circuit_format circuit_format, t_vpr_setu
                 netlist = read_blif(circuit_format, circuit_file, user_models, library_models);
                 break;
             case e_circuit_format::EDIF:
-            	read_edif();
+            	read_edif(circuit_format, circuit_file, user_models, library_models);
+            	break;
             case e_circuit_format::FPGA_INTERCHANGE:
                 netlist = read_interchange_netlist(circuit_file, arch);
                 break;

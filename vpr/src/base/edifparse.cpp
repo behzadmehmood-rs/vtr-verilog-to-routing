@@ -1,12 +1,37 @@
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <string>
+#include <cstring>
+#include "edifparse.h"
+#include "edif_error.h"
 
-#include "sexpr.h"
-
+#include <cstdio>
 #define BUFFER_MAX 512
 
+namespace edifparse {
+
+
+
+/*
+ * Given a filename parses the file as an edif file
+ * and returns a pointer to a struct containing all
+ * the edif commands.  See edif.h for data structure
+ * detials.
+ */
+void edif_parse_filename(std::string filename, Callback& callback) {
+    edif_parse_filename(filename.c_str(), callback);
+}
+
+void edif_parse_filename(const char* filename, Callback& callback) {
+    FILE* infile = std::fopen(filename, "r");
+    if(infile != NULL) {
+        //Parse the file
+        edif_parse_file(infile, callback, filename);
+
+        std::fclose(infile);
+    } else {
+        edif_error_wrap(callback, 0, "", "Could not open file '%s'.\n", filename);
+    }
+}
 int is_float(char *str) {
  // printf ("\n entering is_float function to check %s", str );
   char *ptr = NULL;
@@ -42,14 +67,14 @@ char *read_value(FILE *fp, int *c, int (*is_term)(int)) {
   }
   buffer[len] = '\0';
   //printf ("\n entering read_value function to check %s", buffer );
-  
+
   char *str = (char*)malloc((len + 1) * sizeof(char));
   return strcpy(str, buffer);
 }
 
 // Recursively parse an s-expression from a file stream
-struct SNode *snode_parse(FILE *fp) {
-  // Using a linked list, nodes are appended to the list tail until we 
+struct SNode *snode_parse(FILE *fp, Callback& callback) {
+  // Using a linked list, nodes are appended to the list tail until we
   // reach a list terminator at which point we return the list head.
   struct SNode *tail, *head = NULL;
   int c;
@@ -66,7 +91,7 @@ struct SNode *snode_parse(FILE *fp) {
         node = new SNode;
      // node = malloc(sizeof(struct SNode));
       node->type = LIST;
-      node->list = snode_parse(fp);
+      node->list = snode_parse(fp, callback);
     } else if (c == '"') {
       // Read a string
       node = new SNode;
@@ -95,11 +120,11 @@ struct SNode *snode_parse(FILE *fp) {
         node->type = SYMBOL;
       }
     }
-     
+
     if (node != NULL) {
       // Terminate the node
       node->next = NULL;
-      
+
       if (head == NULL) {
         // Initialize the list head
         head = tail = node;
@@ -115,25 +140,36 @@ struct SNode *snode_parse(FILE *fp) {
   //INTEGER,
   //FLOAT
 struct SNode *current= head;
+
 while (current!=NULL)
   {
+	std::string str,model_name;
   if (current->type==0)
  { printf ("\n \n \n \n The list starts here");}
  if (current->type==1)
  { printf ("\n The string is  %s", current->value);}
  if (current->type==2)
- { printf ("\n The symbol is  %s", current->value);}
+ { printf ("\n The symbol is  %s", current->value);
+
+str=current->value;
+ if (str == "design"){
+ current = current->next;
+   printf ("\n====================The design is %s   =================",current->value);
+   model_name=current->value;
+   callback.begin_model(model_name);}
+   }
  if (current->type==3)
  { printf ("\n The integer is  %c", *current->value);}
   if (current->type==4)
  { printf ("\n The float is  %f", current->value);}
   current = current->next;
-  }
-  return head;
+
 }
+return head;}
 
 // Recursively free memory allocated by a node
-void snode_free(struct SNode *node) {
+void snode_free(struct SNode *node)
+{
   while (node != NULL) {
     struct SNode *tmp = node;
 
@@ -151,4 +187,20 @@ void snode_free(struct SNode *node) {
     free(tmp);
     tmp = NULL;
   }
+}
+
+
+void edif_parse_file(FILE* edif_file, Callback& callback, const char* filename) {
+
+	snode_parse(edif_file, callback);
+    //Just before parsing starts
+    callback.start_parse();
+
+    //Tell the caller the file name
+    callback.filename(filename);
+
+    //Finished parsing
+    callback.finish_parse();
+}
+
 }
