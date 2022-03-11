@@ -156,7 +156,8 @@ str=current->value;
  current = current->next;
    printf ("\n====================The design is %s   =================",current->value);
    model_name=current->value;
-   callback.begin_model(model_name);}
+   callback.begin_model(model_name);
+   }
    }
  if (current->type==3)
  { printf ("\n The integer is  %c", *current->value);}

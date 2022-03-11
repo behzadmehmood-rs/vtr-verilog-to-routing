@@ -37,6 +37,7 @@
 #include "read_edif.h"
 #include "arch_types.h"
 #include "echo_files.h"
+#include "test_edif.h"
 #include "hash.h"
 struct EdifAllocCallback : public edifparse::Callback {
   public:
@@ -65,7 +66,7 @@ struct EdifAllocCallback : public edifparse::Callback {
 
      void begin_model(std::string model_name) override {
          //Create a new model, and set it's name
-    	 printf("EDIF FILE included===================== is %s,",model_name);
+    	// printf("EDIF FILE included===================== is %s",model_name);
 
          edif_models_.emplace_back(model_name, netlist_id_);
         // edif_models_.back().set_block_types(inpad_model_, outpad_model_);
@@ -105,10 +106,10 @@ void read_edif(e_circuit_format circuit_format,
                       const t_model* user_models,
                       const t_model* library_models) {
     AtomNetlist netlist;
+    //constexpr const char*  BLOCK1="BLOCK1";
     std::string netlist_id = vtr::secure_digest_file(edif_file);
     EdifAllocCallback alloc_callback(circuit_format, netlist, netlist_id, user_models, library_models);
     edifparse::edif_parse_filename(edif_file, alloc_callback);
-
     std::cout<<"Adding support for Edif\n";
     printf("EDIF FILE included is %s,",edif_file);
 

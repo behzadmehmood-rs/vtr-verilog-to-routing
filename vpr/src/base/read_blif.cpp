@@ -72,7 +72,7 @@ struct BlifAllocCallback : public blifparse::Callback {
 
     void begin_model(std::string model_name) override {
         //Create a new model, and set it's name
-
+    	 printf("BLIF FILE included===================== is %s",model_name);
         blif_models_.emplace_back(model_name, netlist_id_);
         blif_models_.back().set_block_types(inpad_model_, outpad_model_);
         blif_models_black_box_.emplace_back(false);

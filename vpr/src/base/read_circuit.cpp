@@ -1,5 +1,6 @@
 #include "read_circuit.h"
 #include "read_blif.h"
+#include "test_edif.h"
 #include "read_edif.h"
 #include "read_interchange_netlist.h"
 #include "atom_netlist.h"
@@ -58,21 +59,29 @@ AtomNetlist read_and_process_circuit(e_circuit_format circuit_format, t_vpr_setu
        }
 
     AtomNetlist netlist;
-    {
-        vtr::ScopedStartFinishTimer t("Load circuit");
-
+    //constexpr const char*  BLOCK1="BLOCK1";
+    {	printf("\n entering in blif file ................\n");
+       // vtr::ScopedStartFinishTimer t("Load circuit");
+        printf("entering in blif file ................\n");
+        //test(netlist);
         switch (circuit_format) {
             case e_circuit_format::BLIF:
             case e_circuit_format::EBLIF:
-                netlist = read_blif(circuit_format, circuit_file, user_models, library_models);
+                //netlist = read_blif(circuit_format, circuit_file, user_models, library_models);
+            	printf("entering in blif file ................");
+                netlist =test();
                 break;
             case e_circuit_format::EDIF:
-            	read_edif(circuit_format, circuit_file, user_models, library_models);
+            	printf("entering in edif file ................");
+            	//test();
+            	//read_edif(circuit_format, circuit_file, user_models, library_models);
             	break;
             case e_circuit_format::FPGA_INTERCHANGE:
                 netlist = read_interchange_netlist(circuit_file, arch);
                 break;
             default:
+            	printf("entering in default file ................");
+            	test();
                 VPR_FATAL_ERROR(VPR_ERROR_ATOM_NETLIST,
                                 "Unable to identify circuit file format for '%s'. Expect [blif|eblif|fpga-interchange]!\n",
                                 circuit_file);
