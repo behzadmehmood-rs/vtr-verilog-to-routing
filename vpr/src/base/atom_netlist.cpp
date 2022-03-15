@@ -27,16 +27,16 @@ AtomNetlist::AtomNetlist(std::string name, std::string id)
  *
  */
 void AtomNetlist::set_block_types(const t_model* inpad, const t_model* outpad) {
-    VTR_ASSERT(inpad != nullptr);
-    VTR_ASSERT(outpad != nullptr);
+   // VTR_ASSERT(inpad != nullptr);
+    //VTR_ASSERT(outpad != nullptr);
 
     inpad_model_ = inpad;
     outpad_model_ = outpad;
 }
 
 AtomBlockType AtomNetlist::block_type(const AtomBlockId id) const {
-    VTR_ASSERT(inpad_model_ != nullptr);
-    VTR_ASSERT(outpad_model_ != nullptr);
+   // VTR_ASSERT(inpad_model_ != nullptr);
+   // VTR_ASSERT(outpad_model_ != nullptr);
 
     const t_model* blk_model = block_model(id);
 

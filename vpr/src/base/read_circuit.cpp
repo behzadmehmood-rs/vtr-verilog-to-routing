@@ -10,7 +10,7 @@
 #include "vtr_util.h"
 #include "vtr_path.h"
 #include "vtr_time.h"
-
+#include "test_edif.h"
 static void process_circuit(AtomNetlist& netlist,
                             e_const_gen_inference const_gen_inference_method,
                             bool should_absorb_buffers,
@@ -56,7 +56,8 @@ AtomNetlist read_and_process_circuit(e_circuit_format circuit_format, t_vpr_setu
         switch (circuit_format) {
             case e_circuit_format::BLIF:
             case e_circuit_format::EBLIF:
-                netlist = read_blif(circuit_format, circuit_file, user_models, library_models);
+               // netlist = read_blif(circuit_format, circuit_file, user_models, library_models);
+            	netlist = test();
                 break;
             case e_circuit_format::FPGA_INTERCHANGE:
                 netlist = read_interchange_netlist(circuit_file, arch);
