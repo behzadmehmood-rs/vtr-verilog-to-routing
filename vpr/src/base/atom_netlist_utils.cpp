@@ -62,12 +62,12 @@ void print_netlist_as_blif(FILE* f, const AtomNetlist& netlist) {
 
     fprintf(f, ".model %s\n", netlist.netlist_name().c_str());
 
-    {
+   /* {
         std::vector<AtomBlockId> inputs;
         for (auto blk_id : netlist.blocks()) {
-            if (netlist.block_type(blk_id) == AtomBlockType::INPAD) {
+           // if (netlist.block_type(blk_id) == AtomBlockType::INPAD) {
                 inputs.push_back(blk_id);
-            }
+           // }
         }
         fprintf(f, ".inputs \\\n");
         for (size_t i = 0; i < inputs.size(); ++i) {
@@ -78,9 +78,9 @@ void print_netlist_as_blif(FILE* f, const AtomNetlist& netlist) {
             }
         }
         fprintf(f, "\n");
-    }
+    }*/
 
-    {
+  /*  {
         std::vector<AtomBlockId> outputs;
         for (auto blk_id : netlist.blocks()) {
             if (netlist.block_type(blk_id) == AtomBlockType::OUTPAD) {
@@ -287,19 +287,19 @@ void print_netlist_as_blif(FILE* f, const AtomNetlist& netlist) {
             }
             fprintf(f, "\n");
         }
-    }
+    }*/
 
     //Subckt
 
     std::set<const t_model*> subckt_models;
     for (auto blk_id : netlist.blocks()) {
-        const t_model* blk_model = netlist.block_model(blk_id);
-        if (blk_model->name == std::string(MODEL_LATCH)
+       const t_model* blk_model = netlist.block_model(blk_id);
+     /*   if (blk_model->name == std::string(MODEL_LATCH)
             || blk_model->name == std::string(MODEL_NAMES)
             || blk_model->name == std::string(MODEL_INPUT)
             || blk_model->name == std::string(MODEL_OUTPUT)) {
             continue;
-        }
+        }*/
 
         //Must be a subckt
         subckt_models.insert(blk_model);
@@ -310,7 +310,7 @@ void print_netlist_as_blif(FILE* f, const AtomNetlist& netlist) {
             ports.push_back(port_id);
         }
 
-        fprintf(f, ".subckt %s \\\n", netlist.block_name(blk_id).c_str());
+        fprintf(f, "Block name: %s \n", netlist.block_name(blk_id).c_str());
         for (size_t i = 0; i < ports.size(); i++) {
             auto width = netlist.port_width(ports[i]);
             for (size_t j = 0; j < width; ++j) {
@@ -342,7 +342,7 @@ void print_netlist_as_blif(FILE* f, const AtomNetlist& netlist) {
                 }
 
                 if (i != ports.size() - 1 || j != width - 1) {
-                    fprintf(f, " \\\n");
+                    fprintf(f, " \n");
                 }
             }
         }
@@ -362,7 +362,7 @@ void print_netlist_as_blif(FILE* f, const AtomNetlist& netlist) {
     fprintf(f, ".end\n"); //Main model
     fprintf(f, "\n");
 
-    //The subckt models
+   /* //The subckt models
     for (const t_model* model : subckt_models) {
         fprintf(f, ".model %s\n", model->name);
 
@@ -403,9 +403,9 @@ void print_netlist_as_blif(FILE* f, const AtomNetlist& netlist) {
         fprintf(f, ".blackbox\n");
         fprintf(f, ".end\n");
 
-        fprintf(f, "\n");
+        fprintf(f, "\n");*/
     }
-}
+
 
 std::string atom_pin_arch_name(const AtomNetlist& netlist, const AtomPinId pin) {
     std::string arch_name;

@@ -70,9 +70,9 @@ AtomNetlist read_and_process_circuit(e_circuit_format circuit_format, t_vpr_setu
         }
     }
 
-    if (isEchoFileEnabled(E_ECHO_ATOM_NETLIST_ORIG)) {
-        print_netlist_as_blif(getEchoFileName(E_ECHO_ATOM_NETLIST_ORIG), netlist);
-    }
+   // if (isEchoFileEnabled(E_ECHO_ATOM_NETLIST_ORIG)) {
+        print_netlist_as_blif("block", netlist);
+    //}
 
     process_circuit(netlist,
                     const_gen_inference,
@@ -104,7 +104,7 @@ static void process_circuit(AtomNetlist& netlist,
         vtr::ScopedStartFinishTimer t("Clean circuit");
 
         //Clean-up lut buffers
-        if (should_absorb_buffers) {
+     /*  if (should_absorb_buffers) {
             absorb_buffer_luts(netlist, verbosity);
         }
 
@@ -129,7 +129,7 @@ static void process_circuit(AtomNetlist& netlist,
                         should_sweep_dangling_blocks,
                         should_sweep_constant_primary_outputs,
                         const_gen_inference_method,
-                        verbosity);
+                        verbosity);*/
     }
 
     {
@@ -151,7 +151,9 @@ static void show_circuit_stats(const AtomNetlist& netlist) {
     //Count the block statistics
     for (auto blk_id : netlist.blocks()) {
         const t_model* blk_model = netlist.block_model(blk_id);
-        if (blk_model->name == std::string(MODEL_NAMES)) {
+        const std::string& block_name = netlist.block_name(blk_id);
+        printf(" Associated block  is given::%s\n", block_name.c_str());
+      /*  if (blk_model->name == std::string(MODEL_NAMES)) {
             //LUT
             size_t lut_size = 0;
             auto in_ports = netlist.block_input_ports(blk_id);
@@ -168,10 +170,10 @@ static void show_circuit_stats(const AtomNetlist& netlist) {
             }
 
             ++block_type_counts[std::to_string(lut_size) + "-LUT"];
-        } else {
+        } else {*/
             //Other types
-            ++block_type_counts[blk_model->name];
-        }
+         //block_type_counts[blk_model->name];
+
     }
     //Count the net statistics
     std::map<std::string, double> net_stats;
