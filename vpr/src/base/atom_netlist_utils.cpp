@@ -62,244 +62,244 @@ void print_netlist_as_blif(FILE* f, const AtomNetlist& netlist) {
 
     fprintf(f, ".model %s\n", netlist.netlist_name().c_str());
 
-   /* {
-        std::vector<AtomBlockId> inputs;
-        for (auto blk_id : netlist.blocks()) {
-           // if (netlist.block_type(blk_id) == AtomBlockType::INPAD) {
-                inputs.push_back(blk_id);
-           // }
-        }
-        fprintf(f, ".inputs \\\n");
-        for (size_t i = 0; i < inputs.size(); ++i) {
-            fprintf(f, "%s%s", INDENT, netlist.block_name(inputs[i]).c_str());
+    /* {
+     * std::vector<AtomBlockId> inputs;
+     * for (auto blk_id : netlist.blocks()) {
+     * // if (netlist.block_type(blk_id) == AtomBlockType::INPAD) {
+     * inputs.push_back(blk_id);
+     * // }
+     * }
+     * fprintf(f, ".inputs \\\n");
+     * for (size_t i = 0; i < inputs.size(); ++i) {
+     * fprintf(f, "%s%s", INDENT, netlist.block_name(inputs[i]).c_str());
+     *
+     * if (i != inputs.size() - 1) {
+     * fprintf(f, " \\\n");
+     * }
+     * }
+     * fprintf(f, "\n");
+     * }*/
 
-            if (i != inputs.size() - 1) {
-                fprintf(f, " \\\n");
-            }
-        }
-        fprintf(f, "\n");
-    }*/
-
-  /*  {
-        std::vector<AtomBlockId> outputs;
-        for (auto blk_id : netlist.blocks()) {
-            if (netlist.block_type(blk_id) == AtomBlockType::OUTPAD) {
-                outputs.push_back(blk_id);
-            }
-        }
-        fprintf(f, ".outputs \\\n");
-        size_t i = 0;
-        std::set<std::pair<std::string, std::string>> artificial_buffer_connections_required;
-        for (AtomBlockId blk_id : outputs) {
-            VTR_ASSERT(netlist.block_pins(blk_id).size() == 1);
-            AtomPinId pin = *netlist.block_pins(blk_id).begin();
-
-            std::string blk_name = netlist.block_name(blk_id);
-
-            std::string out_prefix("out:");
-            int strip_size = blk_name.substr(0, out_prefix.size()) == out_prefix ? out_prefix.size() : 0;
-            std::string out_name(blk_name.begin() + strip_size, blk_name.end()); //+4 to trim out: prefix if present
-
-            fprintf(f, "%s%s", INDENT, out_name.c_str());
-
-            //BLIF requires that primary outputs be driven by nets of the same name
-            //
-            //This is not something we enforce within the netlist data structures
-            //
-            //Since BLIF has no 'logical assignment' other than buffers we need to create
-            //buffers to represent the change of net name.
-            //
-            //See if the net has a different name than the current port, if so we
-            //need an artificial buffer LUT
-            AtomNetId net = netlist.pin_net(pin);
-            if (net) {
-                std::string net_name = netlist.net_name(net);
-                if (net_name != out_name) {
-                    artificial_buffer_connections_required.insert({net_name, out_name});
-                }
-            }
-
-            if (i != outputs.size() - 1) {
-                fprintf(f, " \\\n");
-            }
-            ++i;
-        }
-        fprintf(f, "\n");
-        fprintf(f, "\n");
-
-        //Artificial buffers
-        for (auto buf_pair : artificial_buffer_connections_required) {
-            fprintf(f, "#Artificially inserted primary-output assigment buffer\n");
-            fprintf(f, ".names %s %s\n", buf_pair.first.c_str(), buf_pair.second.c_str());
-            fprintf(f, "1 1\n");
-            fprintf(f, "\n");
-        }
-    }
-
-    //Latch
-    for (auto blk_id : netlist.blocks()) {
-        if (netlist.block_type(blk_id) == AtomBlockType::BLOCK) {
-            const t_model* blk_model = netlist.block_model(blk_id);
-            if (blk_model->name != std::string(MODEL_LATCH)) continue;
-
-            //Nets
-            std::string d_net;
-            std::string q_net;
-            std::string clk_net;
-
-            //Determine the nets
-            auto input_ports = netlist.block_input_ports(blk_id);
-            auto output_ports = netlist.block_output_ports(blk_id);
-            auto clock_ports = netlist.block_clock_ports(blk_id);
-
-            for (auto ports : {input_ports, output_ports, clock_ports}) {
-                for (AtomPortId port_id : ports) {
-                    auto pins = netlist.port_pins(port_id);
-                    VTR_ASSERT(pins.size() <= 1);
-                    for (auto in_pin_id : pins) {
-                        auto net_id = netlist.pin_net(in_pin_id);
-                        if (netlist.port_name(port_id) == "D") {
-                            d_net = netlist.net_name(net_id);
-
-                        } else if (netlist.port_name(port_id) == "Q") {
-                            q_net = netlist.net_name(net_id);
-
-                        } else if (netlist.port_name(port_id) == "clk") {
-                            clk_net = netlist.net_name(net_id);
-
-                        } else {
-                            VPR_FATAL_ERROR(VPR_ERROR_ATOM_NETLIST, "Unrecognzied latch port '%s'", netlist.port_name(port_id).c_str());
-                        }
-                    }
-                }
-            }
-
-            if (d_net.empty()) {
-                VTR_LOG_WARN("No net found for .latch '%s' data input (D pin)\n", netlist.block_name(blk_id).c_str());
-                d_net = make_unconn(unconn_count, PinType::SINK);
-            }
-
-            if (q_net.empty()) {
-                VTR_LOG_WARN("No net found for .latch '%s' data output (Q pin)\n", netlist.block_name(blk_id).c_str());
-                q_net = make_unconn(unconn_count, PinType::DRIVER);
-            }
-
-            if (clk_net.empty()) {
-                VTR_LOG_WARN("No net found for .latch '%s' clock (clk pin)\n", netlist.block_name(blk_id).c_str());
-                clk_net = make_unconn(unconn_count, PinType::SINK);
-            }
-
-            //Latch type: VPR always assumes rising edge
-            auto type = "re";
-
-            //Latch initial value
-            int init_val = 3; //Unkown or unspecified
-            //The initial value is stored as a single value in the truth table
-            const auto& so_cover = netlist.block_truth_table(blk_id);
-            if (so_cover.size() == 1) {
-                VTR_ASSERT(so_cover.size() == 1);    //Only one row
-                VTR_ASSERT(so_cover[0].size() == 1); //Only one column
-                switch (so_cover[0][0]) {
-                    case vtr::LogicValue::TRUE:
-                        init_val = 1;
-                        break;
-                    case vtr::LogicValue::FALSE:
-                        init_val = 0;
-                        break;
-                    case vtr::LogicValue::DONT_CARE:
-                        init_val = 2;
-                        break;
-                    case vtr::LogicValue::UNKOWN:
-                        init_val = 3;
-                        break;
-                    default:
-                        VTR_ASSERT_MSG(false, "Unrecognzied latch initial state");
-                }
-            }
-
-            fprintf(f, ".latch %s %s %s %s %d\n", d_net.c_str(), q_net.c_str(), type, clk_net.c_str(), init_val);
-
-            fprintf(f, "\n");
-        }
-    }
-
-    //Names
-    for (auto blk_id : netlist.blocks()) {
-        if (netlist.block_type(blk_id) == AtomBlockType::BLOCK) {
-            const t_model* blk_model = netlist.block_model(blk_id);
-            if (blk_model->name != std::string(MODEL_NAMES)) continue;
-
-            std::vector<AtomNetId> nets;
-
-            //Collect Inputs
-            auto input_ports = netlist.block_input_ports(blk_id);
-            VTR_ASSERT(input_ports.size() <= 1);
-            for (auto in_pin_id : netlist.block_input_pins(blk_id)) {
-                auto net_id = netlist.pin_net(in_pin_id);
-                nets.push_back(net_id);
-            }
-
-            //Collect Outputs
-            auto out_pins = netlist.block_output_pins(blk_id);
-
-            if (out_pins.size() == 1) {
-                auto out_net_id = netlist.pin_net(*out_pins.begin());
-                nets.push_back(out_net_id);
-            } else {
-                VTR_ASSERT(out_pins.size() == 0);
-            }
-
-            fprintf(f, ".names ");
-            for (size_t i = 0; i < nets.size(); ++i) {
-                auto net_id = nets[i];
-
-                fprintf(f, "%s", netlist.net_name(net_id).c_str());
-
-                if (i != nets.size() - 1) {
-                    fprintf(f, " ");
-                }
-            }
-            fprintf(f, "\n");
-
-            //Print the truth table
-            for (auto row : netlist.block_truth_table(blk_id)) {
-                for (size_t i = 0; i < row.size(); ++i) {
-                    //Space between input and output columns
-                    if (i == row.size() - 1) {
-                        fprintf(f, " ");
-                    }
-
-                    switch (row[i]) {
-                        case vtr::LogicValue::TRUE:
-                            fprintf(f, "1");
-                            break;
-                        case vtr::LogicValue::FALSE:
-                            fprintf(f, "0");
-                            break;
-                        case vtr::LogicValue::DONT_CARE:
-                            fprintf(f, "-");
-                            break;
-                        default:
-                            VTR_ASSERT_MSG(false, "Valid single-output cover logic value");
-                    }
-                }
-                fprintf(f, "\n");
-            }
-            fprintf(f, "\n");
-        }
-    }*/
+    /*  {
+     * std::vector<AtomBlockId> outputs;
+     * for (auto blk_id : netlist.blocks()) {
+     * if (netlist.block_type(blk_id) == AtomBlockType::OUTPAD) {
+     * outputs.push_back(blk_id);
+     * }
+     * }
+     * fprintf(f, ".outputs \\\n");
+     * size_t i = 0;
+     * std::set<std::pair<std::string, std::string>> artificial_buffer_connections_required;
+     * for (AtomBlockId blk_id : outputs) {
+     * VTR_ASSERT(netlist.block_pins(blk_id).size() == 1);
+     * AtomPinId pin = *netlist.block_pins(blk_id).begin();
+     *
+     * std::string blk_name = netlist.block_name(blk_id);
+     *
+     * std::string out_prefix("out:");
+     * int strip_size = blk_name.substr(0, out_prefix.size()) == out_prefix ? out_prefix.size() : 0;
+     * std::string out_name(blk_name.begin() + strip_size, blk_name.end()); //+4 to trim out: prefix if present
+     *
+     * fprintf(f, "%s%s", INDENT, out_name.c_str());
+     *
+     * //BLIF requires that primary outputs be driven by nets of the same name
+     * //
+     * //This is not something we enforce within the netlist data structures
+     * //
+     * //Since BLIF has no 'logical assignment' other than buffers we need to create
+     * //buffers to represent the change of net name.
+     * //
+     * //See if the net has a different name than the current port, if so we
+     * //need an artificial buffer LUT
+     * AtomNetId net = netlist.pin_net(pin);
+     * if (net) {
+     * std::string net_name = netlist.net_name(net);
+     * if (net_name != out_name) {
+     * artificial_buffer_connections_required.insert({net_name, out_name});
+     * }
+     * }
+     *
+     * if (i != outputs.size() - 1) {
+     * fprintf(f, " \\\n");
+     * }
+     * ++i;
+     * }
+     * fprintf(f, "\n");
+     * fprintf(f, "\n");
+     *
+     * //Artificial buffers
+     * for (auto buf_pair : artificial_buffer_connections_required) {
+     * fprintf(f, "#Artificially inserted primary-output assigment buffer\n");
+     * fprintf(f, ".names %s %s\n", buf_pair.first.c_str(), buf_pair.second.c_str());
+     * fprintf(f, "1 1\n");
+     * fprintf(f, "\n");
+     * }
+     * }
+     *
+     * //Latch
+     * for (auto blk_id : netlist.blocks()) {
+     * if (netlist.block_type(blk_id) == AtomBlockType::BLOCK) {
+     * const t_model* blk_model = netlist.block_model(blk_id);
+     * if (blk_model->name != std::string(MODEL_LATCH)) continue;
+     *
+     * //Nets
+     * std::string d_net;
+     * std::string q_net;
+     * std::string clk_net;
+     *
+     * //Determine the nets
+     * auto input_ports = netlist.block_input_ports(blk_id);
+     * auto output_ports = netlist.block_output_ports(blk_id);
+     * auto clock_ports = netlist.block_clock_ports(blk_id);
+     *
+     * for (auto ports : {input_ports, output_ports, clock_ports}) {
+     * for (AtomPortId port_id : ports) {
+     * auto pins = netlist.port_pins(port_id);
+     * VTR_ASSERT(pins.size() <= 1);
+     * for (auto in_pin_id : pins) {
+     * auto net_id = netlist.pin_net(in_pin_id);
+     * if (netlist.port_name(port_id) == "D") {
+     * d_net = netlist.net_name(net_id);
+     *
+     * } else if (netlist.port_name(port_id) == "Q") {
+     * q_net = netlist.net_name(net_id);
+     *
+     * } else if (netlist.port_name(port_id) == "clk") {
+     * clk_net = netlist.net_name(net_id);
+     *
+     * } else {
+     * VPR_FATAL_ERROR(VPR_ERROR_ATOM_NETLIST, "Unrecognzied latch port '%s'", netlist.port_name(port_id).c_str());
+     * }
+     * }
+     * }
+     * }
+     *
+     * if (d_net.empty()) {
+     * VTR_LOG_WARN("No net found for .latch '%s' data input (D pin)\n", netlist.block_name(blk_id).c_str());
+     * d_net = make_unconn(unconn_count, PinType::SINK);
+     * }
+     *
+     * if (q_net.empty()) {
+     * VTR_LOG_WARN("No net found for .latch '%s' data output (Q pin)\n", netlist.block_name(blk_id).c_str());
+     * q_net = make_unconn(unconn_count, PinType::DRIVER);
+     * }
+     *
+     * if (clk_net.empty()) {
+     * VTR_LOG_WARN("No net found for .latch '%s' clock (clk pin)\n", netlist.block_name(blk_id).c_str());
+     * clk_net = make_unconn(unconn_count, PinType::SINK);
+     * }
+     *
+     * //Latch type: VPR always assumes rising edge
+     * auto type = "re";
+     *
+     * //Latch initial value
+     * int init_val = 3; //Unkown or unspecified
+     * //The initial value is stored as a single value in the truth table
+     * const auto& so_cover = netlist.block_truth_table(blk_id);
+     * if (so_cover.size() == 1) {
+     * VTR_ASSERT(so_cover.size() == 1);    //Only one row
+     * VTR_ASSERT(so_cover[0].size() == 1); //Only one column
+     * switch (so_cover[0][0]) {
+     * case vtr::LogicValue::TRUE:
+     * init_val = 1;
+     * break;
+     * case vtr::LogicValue::FALSE:
+     * init_val = 0;
+     * break;
+     * case vtr::LogicValue::DONT_CARE:
+     * init_val = 2;
+     * break;
+     * case vtr::LogicValue::UNKOWN:
+     * init_val = 3;
+     * break;
+     * default:
+     * VTR_ASSERT_MSG(false, "Unrecognzied latch initial state");
+     * }
+     * }
+     *
+     * fprintf(f, ".latch %s %s %s %s %d\n", d_net.c_str(), q_net.c_str(), type, clk_net.c_str(), init_val);
+     *
+     * fprintf(f, "\n");
+     * }
+     * }
+     *
+     * //Names
+     * for (auto blk_id : netlist.blocks()) {
+     * if (netlist.block_type(blk_id) == AtomBlockType::BLOCK) {
+     * const t_model* blk_model = netlist.block_model(blk_id);
+     * if (blk_model->name != std::string(MODEL_NAMES)) continue;
+     *
+     * std::vector<AtomNetId> nets;
+     *
+     * //Collect Inputs
+     * auto input_ports = netlist.block_input_ports(blk_id);
+     * VTR_ASSERT(input_ports.size() <= 1);
+     * for (auto in_pin_id : netlist.block_input_pins(blk_id)) {
+     * auto net_id = netlist.pin_net(in_pin_id);
+     * nets.push_back(net_id);
+     * }
+     *
+     * //Collect Outputs
+     * auto out_pins = netlist.block_output_pins(blk_id);
+     *
+     * if (out_pins.size() == 1) {
+     * auto out_net_id = netlist.pin_net(*out_pins.begin());
+     * nets.push_back(out_net_id);
+     * } else {
+     * VTR_ASSERT(out_pins.size() == 0);
+     * }
+     *
+     * fprintf(f, ".names ");
+     * for (size_t i = 0; i < nets.size(); ++i) {
+     * auto net_id = nets[i];
+     *
+     * fprintf(f, "%s", netlist.net_name(net_id).c_str());
+     *
+     * if (i != nets.size() - 1) {
+     * fprintf(f, " ");
+     * }
+     * }
+     * fprintf(f, "\n");
+     *
+     * //Print the truth table
+     * for (auto row : netlist.block_truth_table(blk_id)) {
+     * for (size_t i = 0; i < row.size(); ++i) {
+     * //Space between input and output columns
+     * if (i == row.size() - 1) {
+     * fprintf(f, " ");
+     * }
+     *
+     * switch (row[i]) {
+     * case vtr::LogicValue::TRUE:
+     * fprintf(f, "1");
+     * break;
+     * case vtr::LogicValue::FALSE:
+     * fprintf(f, "0");
+     * break;
+     * case vtr::LogicValue::DONT_CARE:
+     * fprintf(f, "-");
+     * break;
+     * default:
+     * VTR_ASSERT_MSG(false, "Valid single-output cover logic value");
+     * }
+     * }
+     * fprintf(f, "\n");
+     * }
+     * fprintf(f, "\n");
+     * }
+     * }*/
 
     //Subckt
 
     std::set<const t_model*> subckt_models;
     for (auto blk_id : netlist.blocks()) {
-       const t_model* blk_model = netlist.block_model(blk_id);
-     /*   if (blk_model->name == std::string(MODEL_LATCH)
-            || blk_model->name == std::string(MODEL_NAMES)
-            || blk_model->name == std::string(MODEL_INPUT)
-            || blk_model->name == std::string(MODEL_OUTPUT)) {
-            continue;
-        }*/
+        const t_model* blk_model = netlist.block_model(blk_id);
+        /*   if (blk_model->name == std::string(MODEL_LATCH)
+         * || blk_model->name == std::string(MODEL_NAMES)
+         * || blk_model->name == std::string(MODEL_INPUT)
+         * || blk_model->name == std::string(MODEL_OUTPUT)) {
+         * continue;
+         * }*/
 
         //Must be a subckt
         subckt_models.insert(blk_model);
@@ -310,7 +310,7 @@ void print_netlist_as_blif(FILE* f, const AtomNetlist& netlist) {
             ports.push_back(port_id);
         }
 
-        fprintf(f, "Block name: %s \n", netlist.block_name(blk_id).c_str());
+        fprintf(f, "Block name: %s ", netlist.block_name(blk_id).c_str());
         for (size_t i = 0; i < ports.size(); i++) {
             auto width = netlist.port_width(ports[i]);
             for (size_t j = 0; j < width; ++j) {
@@ -362,7 +362,7 @@ void print_netlist_as_blif(FILE* f, const AtomNetlist& netlist) {
     fprintf(f, ".end\n"); //Main model
     fprintf(f, "\n");
 
-   /* //The subckt models
+    /* //The subckt models
     for (const t_model* model : subckt_models) {
         fprintf(f, ".model %s\n", model->name);
 
@@ -404,8 +404,7 @@ void print_netlist_as_blif(FILE* f, const AtomNetlist& netlist) {
         fprintf(f, ".end\n");
 
         fprintf(f, "\n");*/
-    }
-
+}
 
 std::string atom_pin_arch_name(const AtomNetlist& netlist, const AtomPinId pin) {
     std::string arch_name;

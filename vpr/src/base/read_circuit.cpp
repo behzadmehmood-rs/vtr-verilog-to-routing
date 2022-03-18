@@ -4,7 +4,7 @@
 #include "atom_netlist.h"
 #include "atom_netlist_utils.h"
 #include "echo_files.h"
-
+#include <vector>
 #include "vtr_assert.h"
 #include "vtr_log.h"
 #include "vtr_util.h"
@@ -52,12 +52,16 @@ AtomNetlist read_and_process_circuit(e_circuit_format circuit_format, t_vpr_setu
     AtomNetlist netlist;
     {
         vtr::ScopedStartFinishTimer t("Load circuit");
-
+        std::vector<std::string> nets{"h2_c",
+                                      "h1_c"
+                                      "Ou_Carry"};
         switch (circuit_format) {
             case e_circuit_format::BLIF:
             case e_circuit_format::EBLIF:
                 // netlist = read_blif(circuit_format, circuit_file, user_models, library_models);
-                netlist = test();
+                //netlist = test();
+
+                netlist = names(nets);
                 break;
             case e_circuit_format::FPGA_INTERCHANGE:
                 netlist = read_interchange_netlist(circuit_file, arch);
@@ -70,8 +74,8 @@ AtomNetlist read_and_process_circuit(e_circuit_format circuit_format, t_vpr_setu
         }
     }
 
-   // if (isEchoFileEnabled(E_ECHO_ATOM_NETLIST_ORIG)) {
-        print_netlist_as_blif("block", netlist);
+    // if (isEchoFileEnabled(E_ECHO_ATOM_NETLIST_ORIG)) {
+    print_netlist_as_blif("block", netlist);
     //}
 
     process_circuit(netlist,
@@ -104,32 +108,32 @@ static void process_circuit(AtomNetlist& netlist,
         vtr::ScopedStartFinishTimer t("Clean circuit");
 
         //Clean-up lut buffers
-     /*  if (should_absorb_buffers) {
-            absorb_buffer_luts(netlist, verbosity);
-        }
-
-        //Remove the special 'unconn' net
-        AtomNetId unconn_net_id = netlist.find_net("unconn");
-        if (unconn_net_id) {
-            VTR_LOGV_WARN(verbosity > 1, "Removing special net 'unconn' (assumed it represented explicitly unconnected pins)\n");
-            netlist.remove_net(unconn_net_id);
-        }
-
-        //Also remove the 'unconn' block driver, if it exists
-        AtomBlockId unconn_blk_id = netlist.find_block("unconn");
-        if (unconn_blk_id) {
-            VTR_LOGV_WARN(verbosity > 1, "Removing special block 'unconn' (assumed it represented explicitly unconnected pins)\n");
-            netlist.remove_block(unconn_blk_id);
-        }
-
-        //Sweep unused logic/nets/inputs/outputs
-        sweep_iterative(netlist,
-                        should_sweep_dangling_primary_ios,
-                        should_sweep_dangling_nets,
-                        should_sweep_dangling_blocks,
-                        should_sweep_constant_primary_outputs,
-                        const_gen_inference_method,
-                        verbosity);*/
+        /*  if (should_absorb_buffers) {
+         * absorb_buffer_luts(netlist, verbosity);
+         * }
+         *
+         * //Remove the special 'unconn' net
+         * AtomNetId unconn_net_id = netlist.find_net("unconn");
+         * if (unconn_net_id) {
+         * VTR_LOGV_WARN(verbosity > 1, "Removing special net 'unconn' (assumed it represented explicitly unconnected pins)\n");
+         * netlist.remove_net(unconn_net_id);
+         * }
+         *
+         * //Also remove the 'unconn' block driver, if it exists
+         * AtomBlockId unconn_blk_id = netlist.find_block("unconn");
+         * if (unconn_blk_id) {
+         * VTR_LOGV_WARN(verbosity > 1, "Removing special block 'unconn' (assumed it represented explicitly unconnected pins)\n");
+         * netlist.remove_block(unconn_blk_id);
+         * }
+         *
+         * //Sweep unused logic/nets/inputs/outputs
+         * sweep_iterative(netlist,
+         * should_sweep_dangling_primary_ios,
+         * should_sweep_dangling_nets,
+         * should_sweep_dangling_blocks,
+         * should_sweep_constant_primary_outputs,
+         * const_gen_inference_method,
+         * verbosity);*/
     }
 
     {
@@ -153,27 +157,26 @@ static void show_circuit_stats(const AtomNetlist& netlist) {
         const t_model* blk_model = netlist.block_model(blk_id);
         const std::string& block_name = netlist.block_name(blk_id);
         printf(" Associated block  is given::%s\n", block_name.c_str());
-      /*  if (blk_model->name == std::string(MODEL_NAMES)) {
-            //LUT
-            size_t lut_size = 0;
-            auto in_ports = netlist.block_input_ports(blk_id);
-
-            //May have zero (no input LUT) or one input port
-            if (in_ports.size() == 1) {
-                auto port_id = *in_ports.begin();
-
-                //Figure out the LUT size
-                lut_size = netlist.port_width(port_id);
-
-            } else {
-                VTR_ASSERT(in_ports.size() == 0);
-            }
-
-            ++block_type_counts[std::to_string(lut_size) + "-LUT"];
-        } else {*/
-            //Other types
-         //block_type_counts[blk_model->name];
-
+        /*  if (blk_model->name == std::string(MODEL_NAMES)) {
+         * //LUT
+         * size_t lut_size = 0;
+         * auto in_ports = netlist.block_input_ports(blk_id);
+         *
+         * //May have zero (no input LUT) or one input port
+         * if (in_ports.size() == 1) {
+         * auto port_id = *in_ports.begin();
+         *
+         * //Figure out the LUT size
+         * lut_size = netlist.port_width(port_id);
+         *
+         * } else {
+         * VTR_ASSERT(in_ports.size() == 0);
+         * }
+         *
+         * ++block_type_counts[std::to_string(lut_size) + "-LUT"];
+         * } else {*/
+        //Other types
+        //block_type_counts[blk_model->name];
     }
     //Count the net statistics
     std::map<std::string, double> net_stats;

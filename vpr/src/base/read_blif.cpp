@@ -258,6 +258,7 @@ struct BlifAllocCallback : public blifparse::Callback {
 
             if (model_port->dir == OUT_PORT) {
                 subckt_name = nets[i];
+                printf(" port created is given as::%s\n", subckt_name.c_str());
                 break;
             }
         }
