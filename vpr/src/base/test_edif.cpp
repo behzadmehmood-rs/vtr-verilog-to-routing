@@ -100,8 +100,8 @@ AtomNetlist names(std::vector<std::string> nets) {
     int n = 100;
     for (int i = 1; i <= n; i++) {
         std::string in_blk_name = "block" + std::to_string(i);
-        std::string in_net = "input" + std::to_string(i);
-        std::string out_net = "output" + std::to_string(i);
+        std::string in_net = "net" + std::to_string(i);
+        //std::string out_net = "output" + std::to_string(i);
         AtomBlockId blk_id = netlist.create_block(in_blk_name, blk_model);
 
         const std::string& in_blk = netlist.block_name(blk_id);
@@ -114,7 +114,7 @@ AtomNetlist names(std::vector<std::string> nets) {
             netlist.create_pin(input_port_id, i, net_id, PinType::SINK);
         }
 
-        AtomNetId net_id = netlist.create_net(out_net);
+        AtomNetId net_id = netlist.create_net(in_net);
         AtomPortId output_port_id = netlist.create_port(blk_id, blk_model->outputs);
         netlist.create_pin(output_port_id, 0, net_id, PinType::DRIVER);
     }
